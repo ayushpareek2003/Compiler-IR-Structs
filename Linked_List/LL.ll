@@ -37,12 +37,42 @@ define void @print(ptr %head){
 }
 
 
-define void @add(i32){
+define void @add(i32 %val , ptr %headPtr){
+    %head= load ptr,ptr %headPtr
+
+    %size= getelementptr %Node, ptr null, i32 1
+    %bytes= ptrtoint ptr %size to i32
+    %newNode= call ptr @malloc(i32 %bytes) 
     
+    %valStore= getelementptr %Node,ptr %newNode, i32 0,i32 0
+    store i32 %val,ptr %valStore
+
+    %forwardPointer= getelementptr %Node,ptr %newNode, i32 0,i32 1
+    store ptr null,ptr %forwardPointer
+
+    %previousPointer= getelementptr %Node, ptr %newNode, i32 0,i32 2
+    store ptr %head, ptr %previousPointer
+
+    %isNUll= icmp eq ptr %head, null
+
+    br i1 %isNUll, label %Uhead, label %Mhead
+
+Mhead:
+    %prevNext= getelementptr %Node, %head, i32 0, i32 1
+    store ptr %newNode, ptr %prevNext
+    
+    br label %Uhead
+
+Uhead:
+
+    store ptr %newNode, ptr %headPtr
+    ret void     
 
 }
 
+
 define void @delete(){
+
 
 }
 
