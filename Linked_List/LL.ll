@@ -1,17 +1,22 @@
-%Node = type {i32 ,ptr %Node ,ptr %Node}
+
+%Node = type {i32 ,ptr ,ptr }
 
 
 ; Logic for Printing later i will create a seprate file for this 
 
-@.str=private constant [4*i8] c"%d\0A\00"
-declear i32 @printf(ptr, ...)
+@.str = private constant [4 x i8] c"%d\0A\00"
+declare i32 @printf(ptr, ...)
+declare ptr @malloc(i32)
+declare void @free(ptr)
 
 
-define void @print(ptr %head){
+
+define void @print(ptr %headptr){
 
     entry:
+        %head= load ptr, ptr %headptr
         %current = alloca ptr
-        store ptr %head, ptr %current 
+        store ptr %head, ptr %current
         br label %loop
 
     loop:
@@ -26,9 +31,9 @@ define void @print(ptr %head){
         %format_ptr = getelementptr [4 x i8], ptr @.str, i32 0, i32 0
         call i32 (ptr, ...) @printf(ptr %format_ptr, i32 %val) 
 
-        %next_ptr = getelementptr %Node,ptr %ptr_val,i32 0,i32 1
-        %next= load ptr,ptr %next_ptr
-        store ptr %next,ptr %current
+        %next_ptr = getelementptr %Node,ptr %ptr_val,i32 0,i32 2
+        %prev= load ptr,ptr %next_ptr
+        store ptr %prev,ptr %current
         br label %loop
 
     end:
@@ -37,7 +42,7 @@ define void @print(ptr %head){
 }
 
 
-define void @add(i32 %val , ptr %headPtr){
+define void @add(i32 %val , ptr %headPtr ){
     %head= load ptr,ptr %headPtr
 
     %size= getelementptr %Node, ptr null, i32 1
@@ -58,7 +63,7 @@ define void @add(i32 %val , ptr %headPtr){
     br i1 %isNUll, label %Uhead, label %Mhead
 
 Mhead:
-    %prevNext= getelementptr %Node, %head, i32 0, i32 1
+    %prevNext= getelementptr %Node,ptr %head, i32 0, i32 1
     store ptr %newNode, ptr %prevNext
     
     br label %Uhead
@@ -71,18 +76,44 @@ Uhead:
 }
 
 
-define void @delete(){
+define void @delete(ptr %headPtr){
 
+    %head= load ptr,ptr %headPtr
+
+    %flag=icmp eq ptr %head,null
+    br i1 %flag, label %end, label %delete_node
+
+delete_node:
+    
+    %next= getelementptr %Node,ptr %head , i32 0, i32 2
+    %prev = load ptr, ptr %next 
+    store ptr %prev ,ptr %headPtr
+
+    call void @free(ptr %head)
+    br label %end
+
+end:
+    
+    ret void
 
 }
 
 
 define i32 @main(){
-    %head = alloca %Node
-    %val= getelementptr %Node, ptr %head ,i32 0,i32 0
 
-    store i32 100,ptr %val
+    %headPtr = alloca ptr , align 8
+    store ptr null,ptr %headPtr
 
+    call void @add(i32 10,ptr %headPtr)
+    call void @add(i32 20,ptr %headPtr) 
+    call void @add(i32 90,ptr %headPtr)
+
+  
+    call void @print(ptr %headPtr)
+
+    call void @delete(ptr %headPtr)
+   
+    call void @print(ptr %headPtr)
     ret i32 0
 
 }
