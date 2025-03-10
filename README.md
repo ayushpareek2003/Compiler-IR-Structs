@@ -2,4 +2,4 @@
 
 #### LinkedList is Done
 
-#### Working on stack now
+#### Stack is Done
